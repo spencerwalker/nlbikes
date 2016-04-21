@@ -54,5 +54,13 @@
     </div>
     <div class="panel-footer">
         <p class="lead">Subtotal: <span class="text-success pull-right">{{order.Subtotal | currency}}</span></p>
-    </div>
+        <!--<div ng-if="checkoutLI.taxInformation">-->
+            <!--<p class="lead">Tax: <span class="text-success pull-right">{{checkoutLI.taxInformation | currency}}</span></p>-->
+            <!--<p class="lead">Grand Total: <span class="text-success pull-right">{{order.Subtotal + checkoutLI.taxInformation | currency}}</span></p>-->
+        <!--</div>-->
+        <!--<div ng-if="!checkoutLI.taxInformation && checkoutLI.calculatingTax">-->
+            <!--<p class="lead">Tax: <span class="text-muted pull-right">Calculating Tax</span></p>-->
+            <!--<p class="lead">Grand Total: <span class="text-success pull-right">{{order.Subtotal | currency}}</span></p>-->
+        <!--</div>-->
+    <!--</div>-->
 </div>

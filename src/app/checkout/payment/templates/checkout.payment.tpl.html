@@ -1,11 +1,12 @@
-<div class="panel panel-default">
+<div class="panel panel-default" ng-init="checkoutPayment.setAmountMax(checkout.currentOrder)">
     <div class="panel-heading">Payment</div>
     <div class="panel-body">
-        <label for="payment_method">Payment Method</label>
+        <oc-checkout-payment ng-repeat="payment in checkoutPayment.currentOrderPayments"></oc-checkout-payment>
+        <!--<label for="payment_method">Payment Method</label>
         <select id="payment_method" required="true" ng-change="checkoutPayment.setPaymentMethod(checkout.currentOrder)" class="form-control" ng-model="checkoutPayment.currentOrderPayments[0].Type" ng-options="paymentMethod.Value as paymentMethod.Display for paymentMethod in checkoutPayment.paymentMethods"></select>
         <div ng-switch="checkoutPayment.currentOrderPayments[0].Type">
             <div ng-switch-when="PurchaseOrder">
-                <!--Nothing to do here yet-->
+                &lt;!&ndash;Nothing to do here yet&ndash;&gt;
             </div>
             <div ng-switch-when="CreditCard">
                 <div ng-if="!checkoutPayment.createNewCard">
@@ -57,6 +58,9 @@
                 <label for="spending_account">Spending Account</label>
                 <select id="spending_account" ng-required="checkout.PaymentMethod === 'SpendingAccount'" ng-change="checkoutPayment.setSpendingAccount(checkout.currentOrder)" class="form-control" ng-model="checkoutPayment.currentOrderPayments[0].SpendingAccountID" ng-options="spendingAccount.ID as spendingAccount.Name for spendingAccount in checkoutPayment.spendingAccounts"></select>
             </div>
+        </div>-->
+        <div class="text-center add-payment"  ng-if="checkoutPayment.allowMultiplePayments">
+            <button type="button" class="btn btn-default" ng-click="checkoutPayment.createPayment(checkout.currentOrder)" ng-disabled="!checkoutPayment.canAddPayment(checkout.currentOrder, checkoutPayment.currentOrderPayments)"><i class="fa fa-plus-circle"></i> Add Another Payment</button>
         </div>
     </div>
 </div>

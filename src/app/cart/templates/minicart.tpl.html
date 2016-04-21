@@ -44,6 +44,11 @@
                     <button class="btn btn-success btn-block" ui-sref="checkout">Checkout</button>
                 </div>
             </div>
+            <div class="row express-checkout" ng-if="minicart.checkForExpress()">
+                <div class="col-xs-12">
+                    <button class="btn btn-success btn-block" ui-sref="expressCheckout">Express Checkout</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>

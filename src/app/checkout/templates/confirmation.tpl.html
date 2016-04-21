@@ -31,7 +31,17 @@
             <div ng-if="orderConfirmation.orderPayments[0].Type == 'PurchaseOrder'">
                 Purchase Order
             </div>
+            <!--<div>-->
+                <!--Subtotal: {{orderConfirmation.currentOrder.Subtotal | currency}}-->
+            <!--</div>-->
+            <!--<div ng-if="orderConfirmation.currentOrder.xp.taxInfo">-->
+                <!--Tax: {{orderConfirmation.currentOrder.xp.taxInfo | currency}}-->
+            <!--</div>-->
+            <div>
+                Total: {{orderConfirmation.currentOrder.Subtotal | currency}}
+            </div>
         </div>
+
     </div>
     <ordercloud-confirmation-lineitems order="orderConfirmation.currentOrder"></ordercloud-confirmation-lineitems>
     <div class="form-group pull-right">

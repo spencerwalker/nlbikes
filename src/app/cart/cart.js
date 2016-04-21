@@ -106,6 +106,17 @@ function MiniCartController($q, $state, $rootScope, OrderCloud, LineItemHelpers,
             if (data) getLineItems(data);
         });
 
+    vm.checkForExpress = function() {
+        var expressCheckout = false;
+        angular.forEach($state.get(), function(state) {
+            if (state.url && state.url == '/expressCheckout') {
+                expressCheckout = true;
+                return expressCheckout;
+            }
+        });
+        return expressCheckout;
+    };
+
     vm.goToCart = function() {
         $state.go('cart', {}, {reload: true});
     };
@@ -144,7 +155,7 @@ function MiniCartController($q, $state, $rootScope, OrderCloud, LineItemHelpers,
     });
 
 
-    $rootScope.$on('OC:OrderDeleted', function(){ //broadcast is in build > src > app > common > line items
+    $rootScope.$on('OC:RemoveOrder', function(){ //broadcast is in build > src > app > common > line items
         vm.Order = null;
         vm.LineItems = {};
     });

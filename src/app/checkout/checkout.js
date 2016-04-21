@@ -8,6 +8,7 @@ angular.module('orderCloud')
     .directive('ordercloudConfirmationLineitems', ConfirmationLineItemsListDirective)
     .controller('CheckoutLineItemsCtrl', CheckoutLineItemsController)
     .controller('ConfirmationLineItemsCtrl', ConfirmationLineItemsController)
+    //.factory('TaxService', TaxService)
     //toggle isMultipleAddressShipping if you do not wish to allow line items to ship to multiple addresses
     .constant('isMultipleAddressShipping', true);
 ;
@@ -56,8 +57,23 @@ function checkoutConfig($stateProvider) {
                         });
                     return dfd.promise;
                 },
-                OrderPayments: function(OrderCloud, Order) {
-                    return OrderCloud.Payments.List(Order.ID);
+                OrderPayments: function($q, OrderCloud, Order) {
+                    var deferred = $q.defer();
+
+                    OrderCloud.Payments.List(Order.ID)
+                        .then(function(data) {
+                            if (!data.Items.length) {
+                                OrderCloud.Payments.Create(Order.ID, {})
+                                    .then(function(p) {
+                                        deferred.resolve({Items: [p]});
+                                    })
+                            }
+                            else {
+                                deferred.resolve(data);
+                            }
+                        })
+
+                    return deferred.promise;
                 }
 			}
 		})
@@ -124,12 +140,25 @@ function CheckoutController($state, $rootScope, toastr, Order, OrderCloud, Shipp
     vm.isMultipleAddressShipping = true;
     vm.currentOrderPayments = OrderPayments.Items;
 
-    vm.orderIsValid = false;
-    if(vm.currentOrder.BillingAddress && vm.currentOrder.BillingAddress.ID != null && vm.currentOrderPayments[0] && vm.currentOrderPayments[0].Amount == vm.currentOrder.Total){
-        if(vm.currentOrderPayments.length && ((vm.currentOrderPayments[0].Type == 'SpendingAccount' && vm.currentOrderPayments[0].SpendingAccountID != null) || (vm.currentOrderPayments[0].Type == 'CreditCard' && vm.currentOrderPayments[0].CreditCardID != null) || vm.currentOrderPayments[0].Type == 'PurchaseOrder')) {
-            vm.orderIsValid = true;
+    vm.orderIsValid = function(){
+        var orderPaymentsTotal = 0;
+        var validPaymentMethods = false;
+        angular.forEach(vm.currentOrderPayments, function(payment) {
+            orderPaymentsTotal += payment.Amount;
+            if((payment.Type == 'SpendingAccount' && payment.SpendingAccountID != null) || (payment.Type == 'CreditCard' && payment.CreditCardID != null) || payment.Type == 'PurchaseOrder') {
+                validPaymentMethods = true;
+            }
+            else {
+                validPaymentMethods = false;
+            }
+        });
+        if(orderPaymentsTotal === vm.currentOrder.Subtotal && validPaymentMethods && vm.currentOrder.BillingAddress && vm.currentOrder.BillingAddress.ID != null) {
+            return true;
         }
-    }
+        else {
+            return false;
+        }
+    };
 
     // default state (if someone navigates to checkout -> checkout.shipping)
     if ($state.current.name === 'checkout') {
@@ -175,13 +204,16 @@ function CheckoutController($state, $rootScope, toastr, Order, OrderCloud, Shipp
             toastr.error('Please select a shipping address for all line items');
         }
     };
+
 }
 
-function OrderConfirmationController(Order, CurrentOrder, OrderCloud, $state, isMultipleAddressShipping, $exceptionHandler, OrderPayments) {
+function OrderConfirmationController($rootScope, Order, CurrentOrder, OrderCloud, $state, isMultipleAddressShipping, $exceptionHandler, OrderPayments, toastr) {
     var vm = this;
+
     vm.currentOrder = Order;
     vm.isMultipleAddressShipping = isMultipleAddressShipping;
     vm.orderPayments = OrderPayments.Items;
+
 
     vm.checkPaymentType = function() {
         if(vm.orderPayments[0].Type == 'CreditCard') {
@@ -196,7 +228,7 @@ function OrderConfirmationController(Order, CurrentOrder, OrderCloud, $state, is
                     vm.spendingAccountDetails = sa;
                 })
         }
-    }
+    };
 
     vm.checkPaymentType();
 
@@ -205,16 +237,19 @@ function OrderConfirmationController(Order, CurrentOrder, OrderCloud, $state, is
             .then(function() {
                 CurrentOrder.Remove()
                     .then(function(){
+                        toastr.success('Your order has been submitted', 'Success');
+                        $rootScope.$broadcast('OC:RemoveOrder');
                         $state.go('orderReview', {orderid: vm.currentOrder.ID})
                     })
             })
             .catch(function(ex) {
-                $exceptionHandler(ex);
+                toastr.error("Your order did not submit successfully.", 'Error');
+                //$exceptionHandler(ex);
             });
     }
 }
 
-function OrderReviewController(SubmittedOrder, isMultipleAddressShipping, OrderCloud, $q, LineItemHelpers) {
+function OrderReviewController(SubmittedOrder, isMultipleAddressShipping, OrderCloud, $q, LineItemHelpers, toastr) {
 	var vm = this;
     vm.submittedOrder = SubmittedOrder;
     vm.isMultipleAddressShipping = isMultipleAddressShipping;
@@ -243,7 +278,30 @@ function OrderReviewController(SubmittedOrder, isMultipleAddressShipping, OrderC
 
     vm.print = function() {
         window.print();
+    };
+
+    vm.addToFavorites = function(){
+        //TODO: Refactor when SDK allows us to patch null
+        if(!SubmittedOrder.xp) {
+            SubmittedOrder.xp ={}
+        }
+        SubmittedOrder.xp.favorite = true;
+
+        OrderCloud.Orders.Update(SubmittedOrder.ID, SubmittedOrder)
+            .then(function(){
+                toastr.success("Your order has been added to Favorites! You can now easily find your order in 'Order History'", 'Success')
+            })
+            .catch(function(){
+                toastr.error('There was a problem adding this order to your Favorites', 'Error');
+            });
+    };
+    vm.removeFromFavorites = function(){
+        delete SubmittedOrder.xp.favorite;
+        OrderCloud.Orders.Patch(SubmittedOrder.ID, {"xp": null} );
+        toastr.success("Your order has been removed from Favorites", 'Success')
     }
+
+
 
 }
 
@@ -259,22 +317,68 @@ function CheckoutLineItemsListDirective() {
     };
 }
 
-function CheckoutLineItemsController($rootScope, $scope, $q, OrderCloud, LineItemHelpers, Underscore, CheckoutService) {
+function CheckoutLineItemsController($rootScope, $scope, $q, OrderCloud, LineItemHelpers, Underscore, CheckoutService, CurrentOrder, toastr) {
     var vm = this;
     vm.lineItems = {};
     vm.UpdateQuantity = LineItemHelpers.UpdateQuantity;
     vm.UpdateShipping = LineItemHelpers.UpdateShipping;
     vm.setCustomShipping = LineItemHelpers.CustomShipping;
     vm.RemoveItem = LineItemHelpers.RemoveItem;
+    //vm.calculatingTax = false;
 
     $scope.$on('LineItemAddressUpdated', function(event, LineItemID, address) {
+        //vm.calculatingTax = true;
         Underscore.where(vm.lineItems.Items, {ID: LineItemID})[0].ShippingAddress = address;
+        //TaxService.Calculate($scope.order.ID)
+        //    .then(function (taxData) {
+        //        if(taxData.calculatedTaxSummary){
+        //            vm.taxInformation = taxData.calculatedTaxSummary.totalTax;
+        //            CurrentOrder.Get()
+        //                .then(function(order){
+        //                    order.xp = {taxInfo: vm.taxInformation};
+        //                    OrderCloud.Orders.Update(order.ID, order);
+        //                })
+        //        }
+        //        else{
+        //            toastr.error('The provided address is not valid', 'Error');
+        //            vm.calculatingTax = false;
+        //            vm.taxInformation = 0;
+        //            CurrentOrder.Get()
+        //                .then(function(order){
+        //                    order.xp = {taxInfo: vm.taxInformation};
+        //                    OrderCloud.Orders.Update(order.ID, order);
+        //                })
+        //        }
+        //
+        //})
     });
 
     $scope.$on('OrderShippingAddressChanged', function(event, order, address) {
+        //vm.calculatingTax = true;
         angular.forEach(vm.lineItems.Items, function(li) {
             li.ShippingAddressID = address.ID;
             li.ShippingAddress = address;
+        //    TaxService.Calculate($scope.order.ID)
+        //        .then(function (taxData) {
+        //            if(taxData.calculatedTaxSummary){
+        //                vm.taxInformation = taxData.calculatedTaxSummary.totalTax;
+        //                CurrentOrder.Get()
+        //                    .then(function(order){
+        //                        order.xp = {taxInfo: vm.taxInformation};
+        //                        OrderCloud.Orders.Update(order.ID, order);
+        //                    })
+        //            }
+        //            else{
+        //                toastr.error('The provided address is not valid', 'Error');
+        //                vm.calculatingTax = false;
+        //                vm.taxInformation = 0;
+        //                CurrentOrder.Get()
+        //                    .then(function(order){
+        //                        order.xp = {taxInfo: vm.taxInformation};
+        //                        OrderCloud.Orders.Update(order.ID, order);
+        //                    })
+        //            }
+        //        })
         });
     });
 
@@ -308,6 +412,21 @@ function CheckoutLineItemsController($rootScope, $scope, $q, OrderCloud, LineIte
         else return null;
     };
 }
+//function TaxService($http, OrderCloud, $exceptionHandler) {
+//    return {Calculate: Calculate};
+//    function Calculate(OrderID) {
+//        var requestObject = {
+//            orderID: OrderID,
+//            accessToken: OrderCloud.Auth.ReadToken(),
+//            buyerID: OrderCloud.BuyerID.Get()
+//        };
+//        return $http.post('https://Four51TRIAL104401.jitterbit.net/Four51OnPrem/v1/CalculateTax', requestObject).then(function (taxInfo) {
+//            return taxInfo.data;
+//        }).catch(function (err) {
+//            $exceptionHandler(err);
+//        });
+//    }
+//}
 
 function ConfirmationLineItemsListDirective() {
     return {

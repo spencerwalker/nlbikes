@@ -1,6 +1,9 @@
 angular.module('orderCloud')
 	.config(checkoutPaymentConfig)
 	.controller('CheckoutPaymentCtrl', CheckoutPaymentController)
+	.directive('ocCheckoutPayment', OCCheckoutPayment)
+    //toggle allowMultiplePayments if you do not wish to allow multiple payments on the same order
+    .constant('allowMultiplePayments', true)
 ;
 
 function checkoutPaymentConfig($stateProvider) {
@@ -22,8 +25,9 @@ function checkoutPaymentConfig($stateProvider) {
 		});
 }
 
-function CheckoutPaymentController($state, AvailableCreditCards, AvailableSpendingAccounts, OrderCloud, toastr, OrderPayments) {
+function CheckoutPaymentController($state, Underscore, AvailableCreditCards, AvailableSpendingAccounts, OrderCloud, toastr, OrderPayments, allowMultiplePayments) {
 	var vm = this;
+    vm.allowMultiplePayments = allowMultiplePayments;
     vm.currentOrderPayments = OrderPayments.Items;
     vm.paymentMethods = [
         {Display: 'Purchase Order', Value: 'PurchaseOrder'},
@@ -41,23 +45,44 @@ function CheckoutPaymentController($state, AvailableCreditCards, AvailableSpendi
     vm.today = new Date();
     vm.creditCards = AvailableCreditCards.Items;
     vm.spendingAccounts = AvailableSpendingAccounts.Items;
+
+
     vm.setCreditCard = SetCreditCard;
     vm.saveCreditCard = SaveCreditCard;
     vm.setSpendingAccount = SetSpendingAccount;
     vm.setPaymentMethod = SetPaymentMethod;
+    vm.createPayment = CreatePayment;
+    vm.removePayment = RemovePayment;
+    vm.canAddPayment = CanAddPayment;
+    vm.patchPaymentAmount = PatchPaymentAmount;
+    vm.setAmountMax = SetAmountMax;
 
-    function SetPaymentMethod(order) {
+    function CreatePayment(order) {
+        OrderCloud.Payments.Create(order.ID, {Type: vm.currentOrderPayments[0].Type})
+            .then(function() {
+                $state.reload();
+            });
+    }
+
+    function RemovePayment(order, index) {
+        OrderCloud.Payments.Delete(order.ID, vm.currentOrderPayments[index].ID)
+            .then(function() {
+                $state.reload();
+            });
+    }
+
+    function SetPaymentMethod(order, index) {
         if (!vm.currentOrderPayments[0].Amount) {
             // When Order Payment Method is changed it will clear out all saved payment information
-            OrderCloud.Payments.Create(order.ID, {Type: vm.currentOrderPayments[0].Type})
+            OrderCloud.Payments.Create(order.ID, {Type: vm.currentOrderPayments[index].Type})
                 .then(function() {
                     $state.reload();
                 });
         }
         else {
-            OrderCloud.Payments.Delete(order.ID, vm.currentOrderPayments[0].ID)
+            OrderCloud.Payments.Delete(order.ID, vm.currentOrderPayments[index].ID)
                 .then(function(){
-                    OrderCloud.Payments.Create(order.ID, {Type: vm.currentOrderPayments[0].Type})
+                    OrderCloud.Payments.Create(order.ID, {Type: vm.currentOrderPayments[index].Type})
                         .then(function() {
                             $state.reload();
                         });
@@ -65,7 +90,7 @@ function CheckoutPaymentController($state, AvailableCreditCards, AvailableSpendi
         }
     }
 
-    function SaveCreditCard(order) {
+    function SaveCreditCard(order, index) {
         // TODO: Needs to save the credit card with integration plug in
         if (vm.creditCard) {
             // This is just until Nick gives me the integration
@@ -81,7 +106,7 @@ function CheckoutPaymentController($state, AvailableCreditCards, AvailableSpendi
                                         UserID: me.ID
                                     })
                                     .then(function() {
-                                        OrderCloud.Payments.Patch(order.ID, vm.currentOrderPayments[0].ID, {CreditCardID: CreditCard.ID})
+                                        OrderCloud.Payments.Patch(order.ID, vm.currentOrderPayments[index].ID, {CreditCardID: CreditCard.ID})
                                             .then(function() {
                                                 $state.reload();
                                             });
@@ -95,28 +120,60 @@ function CheckoutPaymentController($state, AvailableCreditCards, AvailableSpendi
         }
     }
 
-    function SetCreditCard(order) {
-        if (vm.currentOrderPayments[0].CreditCardID && vm.currentOrderPayments[0].Type === "CreditCard") {
-            OrderCloud.Payments.Patch(order.ID, vm.currentOrderPayments[0].ID, {CreditCardID: vm.currentOrderPayments[0].CreditCardID})
+    function SetCreditCard(order, index) {
+        if (vm.currentOrderPayments[index].Type === "CreditCard") {
+            OrderCloud.Payments.Patch(order.ID, vm.currentOrderPayments[index].ID, {CreditCardID: vm.currentOrderPayments[index].CreditCardID})
                 .then(function() {
                     $state.reload();
                 });
         }
     }
 
-    function SetSpendingAccount(order) {
-        if (vm.currentOrderPayments[0].SpendingAccountID && vm.currentOrderPayments[0].Type ==='SpendingAccount') {
-            OrderCloud.Payments.Patch(order.ID, vm.currentOrderPayments[0].ID, {SpendingAccountID: vm.currentOrderPayments[0].SpendingAccountID})
+    function SetSpendingAccount(order, index) {
+        if (vm.currentOrderPayments[index].SpendingAccountID && vm.currentOrderPayments[index].Type ==='SpendingAccount') {
+            OrderCloud.Payments.Patch(order.ID, vm.currentOrderPayments[index].ID, {SpendingAccountID: vm.currentOrderPayments[index].SpendingAccountID})
                 .then(function() {
                     $state.reload();
                 })
                 .catch(function(err) {
-                    OrderCloud.Payments.Delete(order.ID, vm.currentOrderPayments[0].ID)
+                    OrderCloud.Payments.Delete(order.ID, vm.currentOrderPayments[index].ID)
                         .then(function() {
                             $state.reload();
                             toastr.error(err.data.Errors[0].Message + ' Please choose another payment method, or another spending account.', 'Error:')
                         })
                 });
         }
+    }
+
+    function CanAddPayment(order, payments) {
+        var paymentTotal = 0;
+        angular.forEach(payments, function(payment) {
+            paymentTotal += payment.Amount;
+        });
+        return ((paymentTotal < order.Total) && Underscore.pluck(vm.currentOrderPayments, ''));
+    }
+
+    function PatchPaymentAmount(order, index) {
+        if (vm.currentOrderPayments[index].Amount && (vm.currentOrderPayments[index].Amount <= vm.currentOrderPayments[index].MaxAmount)) {
+            OrderCloud.Payments.Patch(order.ID, vm.currentOrderPayments[index].ID, {Amount: vm.currentOrderPayments[index].Amount})
+                .then(function() {
+                    SetAmountMax(order);
+                });
+        }
+    }
+
+    function SetAmountMax(order) {
+        angular.forEach(vm.currentOrderPayments, function(payment) {
+            var maxAmount = order.Total - Underscore.reduce(Underscore.pluck(vm.currentOrderPayments, 'Amount'), function(a, b) { return a + b; });
+            payment.MaxAmount = (payment.Amount + maxAmount).toString();
+        });
+
+    }
+}
+
+function OCCheckoutPayment() {
+    return {
+        restrict: 'E',
+        templateUrl: 'checkout/payment/templates/payment.tpl.html'
     }
 }

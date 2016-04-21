@@ -1,10 +1,17 @@
 <article class="container-fluid full-width">
-	<h3 class="page-header">
-		Order Review
-	</h3>
-    <div class="form-group hidden-print">
-        <button class="btn btn-default" ng-click="orderReview.print()">Print</button>
-    </div>
+    <div class="order-review-header">
+	    <h3 class="page-header">
+		    Order Review
+	    </h3>
+        <div class="hidden-print form-group">
+            <button class="btn btn-default" ng-click="orderReview.print()">Print</button>
+            <button class="btn btn-info" ng-click="orderReview.removeFromFavorites()" ng-if="orderReview.submittedOrder.xp.favorite">
+                <i class="fa fa-star"> </i> Remove from Favorites
+            </button>
+            <button class="btn btn-primary" ng-click="orderReview.addToFavorites()" ng-if="!(orderReview.submittedOrder.xp.favorite)">
+                <i class="fa fa-star"> </i> Favorite This Order
+            </button>
+        </div>
         <div class="panel panel-default">
             <div class="panel-heading"><b>Billing Address</b></div>
             <div class="panel-body">
@@ -33,6 +40,15 @@
                 </div>
                 <div ng-if="orderReview.submittedOrder.PaymentMethod == 'PurchaseOrder'">
                     <!--need info for each payment type-->
+                </div>
+                <!--<div>-->
+                    <!--Subtotal: {{orderReview.submittedOrder.Subtotal | currency}}-->
+                <!--</div>-->
+                <!--<div ng-if="orderReview.submittedOrder.xp.taxInfo">-->
+                    <!--Tax : {{orderReview.submittedOrder.xp.taxInfo | currency}}-->
+                <!--</div>-->
+                <div>
+                    Total: {{orderReview.submittedOrder.Subtotal| currency}}
                 </div>
             </div>
         </div>

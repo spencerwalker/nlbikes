@@ -18,7 +18,7 @@
                             <small class="text-muted">{{lineItem.ProductID}}</small></br>
                         </td>
                     </tr>
-                    <tr ng-repeat-end class="shipping_info" ng-if="confirmationLI.isMultipleAddressShipping">
+                    <tr ng-repeat-end class="shipping_info" ng-if="confirmationLI.isMultipleAddressShipping && lineItem.ShippingAddress && !order.ShippingAddressID">
                         <div>
                             <td colspan="3">
                                 <label>Shipping To:</label>
