@@ -1,0 +1,20 @@
+<form class="quickViewModal"  name="product_spec_form" ng-submit="quickViewModal.addToCart(quickViewModal.selectedProduct)" >
+    <div class="modal-header">
+        <i class="fa fa-times fa-3x fa-pull-right" ng-click="quickViewModal.cancel()"></i>
+        <h3 class="modal-title">{{quickViewModal.selectedProduct.Name}}</h3>
+        <h2 class="panel-title">{{quickViewModal.selectedProduct.ID}}</h2>
+    </div>
+    <div class="col-md-6" ng-if="quickViewModal.selectedProduct.xp.image">
+        <img class="img-responsive" ng-src="{{quickViewModal.selectedProduct.xp.image.URL}}" alt="Product Image">
+    </div>
+    <div class="panel-heading">
+        <h3 class="panel-title">Description</h3>
+    </div>
+    <div class="panel-body">
+        {{quickViewModal.selectedProduct.Description}}
+        <oc-spec-form product="quickViewModal.selectedProduct"></oc-spec-form>
+    </div>
+    <div class="modal-footer from-group">
+        <oc-add-to-order formname="product_spec_form" product="quickViewModal.selectedProduct"></oc-add-to-order>
+    </div>
+</form>

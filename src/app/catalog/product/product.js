@@ -8,6 +8,7 @@ angular.module('orderCloud')
     .controller('LineItemEditCtrl', LineItemEditController)
     .controller('OrderInputCtrl', OrderInputController)
 
+
 ;
 
 function ProductConfig($stateProvider) {
