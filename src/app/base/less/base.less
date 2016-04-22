@@ -138,3 +138,58 @@
     }
   }
 }
+
+//Theme
+.logo {
+  max-width: 225px;
+  padding: 5px 0;
+  margin: 0 auto;
+  display: block;
+}
+
+.nav-pills {
+  > li {
+    > a {
+      color: @white;
+    }
+  }
+}
+
+#BaseLeft {
+  h4 {
+    margin-left: -@padding-base-horizontal;
+    margin-right: -@padding-base-horizontal;
+    padding: @padding-base-horizontal (@padding-base-horizontal*2) 0;
+    color: lighten(@brand-primary, 35);
+    border-top: 1px solid darken(@brand-primary, 5);
+    /* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#413054+0,382948+100 */
+    background: #413054; /* Old browsers */
+    background: -moz-linear-gradient(top, #413054 0%, #382948 100%); /* FF3.6-15 */
+    background: -webkit-linear-gradient(top, #413054 0%, #382948 100%); /* Chrome10-25,Safari5.1-6 */
+    background: linear-gradient(to bottom, #413054 0%, #382948 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#413054', endColorstr='#382948', GradientType=0); /* IE6-9 */
+  }
+
+  ul li ul {
+    background-color: lighten(@brand-primary, 5);
+    border-left: none;
+    border-radius: 0;
+
+    li {
+      margin-left: 5px !important;
+      margin-right: 5px !important;
+
+      ul {
+        border-left: 1px solid @gray-lighter;
+        margin-left: @padding-base-horizontal;
+      }
+    }
+  }
+
+  .facet-list-container {
+    h4 {
+      padding: @padding-base-horizontal @padding-base-horizontal 0;
+      background: transparent;
+    }
+  }
+}
