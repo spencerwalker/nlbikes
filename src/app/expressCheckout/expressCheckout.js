@@ -1,6 +1,7 @@
 angular.module('orderCloud')
     .config(ExpressCheckoutConfig)
     .controller('ExpressCheckoutCtrl', ExpressCheckoutController)
+    .controller('ExpressOrderReviewCtrl', ExpressOrderReviewController)
 
 ;
 
@@ -39,7 +40,7 @@ function ExpressCheckoutConfig($stateProvider) {
                         })
                         .catch(function() {
                             toastr.error('You do not have an active open order.', 'Error');
-                            if ($state.current.name.indexOf('checkout') > -1) {
+                            if ($state.current.name.indexOf('expressCheckout') > -1) {
                                 $state.go('home');
                             }
                             dfd.reject();
@@ -101,6 +102,31 @@ function ExpressCheckoutConfig($stateProvider) {
                 }
             }
     })
+        .state('expressOrderReview', {
+            parent: 'base',
+            //data: {componentName: 'Checkout'},
+            url: '/order/:orderid/expressReview',
+            templateUrl: 'expressCheckout/templates/expressCheckoutReview.tpl.html',
+            controller: 'ExpressOrderReviewCtrl',
+            controllerAs: 'expressOrderReview',
+            resolve: {
+                SubmittedOrder: function($q, OrderCloud, $stateParams, $state, toastr) {
+                    var dfd = $q.defer();
+                    OrderCloud.Orders.Get($stateParams.orderid)
+                        .then(function(order){
+                            if(order.Status == 'Unsubmitted') {
+                                $state.go('checkout.shipping')
+                                    .then(function() {
+                                        toastr.error('You cannot review an Unsubmitted Order', 'Error');
+                                        dfd.reject();
+                                    });
+                            }
+                            else dfd.resolve(order);
+                        });
+                    return dfd.promise;
+                }
+            }
+        })
 }
 
 function ExpressCheckoutController($state, $rootScope, toastr, OrderCloud, CurrentUser, CurrentOrder, Order, OrderPayments, CreditCards, SpendingAccounts, ShippingAddresses, BillingAddresses) {
@@ -203,14 +229,98 @@ function ExpressCheckoutController($state, $rootScope, toastr, OrderCloud, Curre
             .then(function() {
                 CurrentOrder.Remove()
                     .then(function(){
+                        $state.go('orderReview', {orderid: vm.currentOrder.ID});
                         $rootScope.$broadcast('OC:RemoveOrder');
                         toastr.success('Your order has been submitted', 'Success');
-                        $state.go('orderReview', {orderid: vm.currentOrder.ID})
                     })
             })
             .catch(function() {
                 toastr.error("Your order did not submit successfully.", 'Error');
             });
     }
+
+}
+
+function ExpressOrderReviewController(SubmittedOrder, isMultipleAddressShipping, OrderCloud, $q, LineItemHelpers, toastr) {
+    var vm = this;
+    vm.submittedOrder = SubmittedOrder;
+    vm.isMultipleAddressShipping = isMultipleAddressShipping;
+
+    OrderCloud.Payments.List(vm.submittedOrder.ID)
+        .then(function(data){
+            vm.orderPayments = data.Items;
+        })
+        .then(function(){
+            angular.forEach(vm.orderPayments, function(payment, index){
+                if(payment.Type === 'CreditCard' && payment.CreditCardID) {
+                    OrderCloud.CreditCards.Get(payment.CreditCardID)
+                        .then(function(cc){
+                            vm.orderPayments[index].creditCardDetails = cc;
+                        })
+                        .catch(function(ex){
+                            toastr.error(ex, 'Error');
+                        })
+                }
+                if(payment.Type === 'SpendingAccount' && payment.SpendingAccountID) {
+                    OrderCloud.SpendingAccounts.Get(payment.SpendingAccountID)
+                        .then(function(sa){
+                            vm.orderPayments[index].spendingAccountDetails = sa;
+                        })
+                        .catch(function(ex){
+                            toastr.error(ex, 'Error');
+                        })
+                }
+            });
+        });
+
+
+    var dfd = $q.defer();
+    var queue = [];
+    OrderCloud.LineItems.List(vm.submittedOrder.ID)
+        .then(function(li) {
+            vm.LineItems = li;
+            if (li.Meta.TotalPages > li.Meta.Page) {
+                var page = li.Meta.Page;
+                while (page < li.Meta.TotalPages) {
+                    page += 1;
+                    queue.push(OrderCloud.LineItems.List(vm.submittedOrder.ID, page));
+                }
+            }
+            $q.all(queue)
+                .then(function(results) {
+                    angular.forEach(results, function(result) {
+                        vm.LineItems.Items = [].concat(vm.LineItems.Items, result.Items);
+                        vm.LineItems.Meta = result.Meta;
+                    });
+                    dfd.resolve(LineItemHelpers.GetProductInfo(vm.LineItems.Items.reverse()));
+                });
+        });
+
+    vm.print = function() {
+        window.print();
+    };
+
+    vm.addToFavorites = function(){
+        //TODO: Refactor when SDK allows us to patch null
+        if(!SubmittedOrder.xp) {
+            SubmittedOrder.xp ={}
+        }
+        SubmittedOrder.xp.favorite = true;
+
+        OrderCloud.Orders.Update(SubmittedOrder.ID, SubmittedOrder)
+            .then(function(){
+                toastr.success("Your order has been added to Favorites! You can now easily find your order in 'Order History'", 'Success')
+            })
+            .catch(function(){
+                toastr.error('There was a problem adding this order to your Favorites', 'Error');
+            });
+    };
+    vm.removeFromFavorites = function(){
+        delete SubmittedOrder.xp.favorite;
+        OrderCloud.Orders.Patch(SubmittedOrder.ID, {"xp": null} );
+        toastr.success("Your order has been removed from Favorites", 'Success')
+    }
+
+
 
 }

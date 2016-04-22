@@ -43,7 +43,7 @@
                         <label>Change Shipping Address:</label>
                         <div class="input-group">
                             <span class="input-group-addon"><i class="fa fa-truck"></i></span>
-                            <select required="true" ng-change="checkoutLI.UpdateShipping(order, lineItem, lineItem.ShippingAddressID);" ng-model="lineItem.ShippingAddressID" class="form-control" ng-options="address.ID as address.AddressName for address in addresses"></select>
+                            <select required="true" ng-change="checkoutLI.UpdateShipping(order, lineItem, lineItem.ShippingAddressID);" ng-model="lineItem.ShippingAddress.ID" class="form-control" ng-options="address.ID as (address.AddressName || address.Street1) for address in addresses"></select>
                             <span ng-click="checkoutLI.setCustomShipping(order, lineItem);" class="btn-success input-group-addon"><i class="fa fa-plus-circle"></i></span>
                         </div>
                     </td>

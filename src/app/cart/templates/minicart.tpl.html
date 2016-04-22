@@ -37,10 +37,10 @@
         </div>
         <div class="panel-footer">
             <div class="row">
-                <div class="col-xs-6">
+                <div ng-class="{'col-xs-6': minicart.checkForCheckout(), 'col-xs-12': !minicart.checkForCheckout()}">
                     <button class="btn btn-info btn-block" ng-click="minicart.goToCart()">Cart</button>
                 </div>
-                <div class="col-xs-6">
+                <div class="col-xs-6"  ng-if="minicart.checkForCheckout()">
                     <button class="btn btn-success btn-block" ui-sref="checkout">Checkout</button>
                 </div>
             </div>

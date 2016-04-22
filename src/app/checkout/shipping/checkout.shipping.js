@@ -29,7 +29,7 @@ function CheckoutShippingController($state, $rootScope, OrderCloud, OrderShippin
             OrderShippingAddress.Set(order.ShippingAddressID);
             OrderCloud.Addresses.Get(order.ShippingAddressID)
                 .then(function(address){
-                    OrderCloud.Orders.SetShippingAddress(order.ID, address)
+                    OrderCloud.Orders.Patch(order.ID, {ShippingAddressID: address.ID})
                         .then(function() {
                             $rootScope.$broadcast('OrderShippingAddressChanged', order, address);
                         });
@@ -53,7 +53,7 @@ function CheckoutShippingController($state, $rootScope, OrderCloud, OrderShippin
                                 .then(function() {
                                     OrderCloud.Addresses.Get(address.ID)
                                         .then(function(address) {
-                                            OrderCloud.Orders.SetShippingAddress(order.ID, address)
+                                            OrderCloud.Orders.Patch(order.ID, {ShippingAddressID: address.ID})
                                                 .then(function() {
                                                     $state.reload();
                                                 });
@@ -63,7 +63,7 @@ function CheckoutShippingController($state, $rootScope, OrderCloud, OrderShippin
                 });
         }
         else {
-            OrderCloud.Orders.SetShippingAddress(order.ID, vm.address)
+            OrderCloud.Orders.Patch(order.ID, {ShippingAddressID: vm.address.ID})
                 .then(function() {
                     $state.reload();
                 });

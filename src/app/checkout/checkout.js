@@ -214,34 +214,37 @@ function OrderConfirmationController($rootScope, Order, CurrentOrder, OrderCloud
     vm.isMultipleAddressShipping = isMultipleAddressShipping;
     vm.orderPayments = OrderPayments.Items;
 
-
-    vm.checkPaymentType = function() {
-        if(vm.orderPayments[0].Type == 'CreditCard') {
-            OrderCloud.CreditCards.Get(vm.orderPayments[0].CreditCardID)
+    angular.forEach(vm.orderPayments, function(payment, index){
+        if(payment.Type === 'CreditCard' && payment.CreditCardID) {
+            OrderCloud.CreditCards.Get(payment.CreditCardID)
                 .then(function(cc){
-                    vm.creditCardDetails = cc;
+                    vm.orderPayments[index].creditCardDetails = cc;
+                })
+                .catch(function(ex){
+                    toastr.error(ex, 'Error');
                 })
         }
-        if(vm.orderPayments[0].Type == 'SpendingAccount') {
-            OrderCloud.SpendingAccounts.Get(vm.orderPayments[0].SpendingAccountID)
+        if(payment.Type === 'SpendingAccount' && payment.SpendingAccountID) {
+            OrderCloud.SpendingAccounts.Get(payment.SpendingAccountID)
                 .then(function(sa){
-                    vm.spendingAccountDetails = sa;
+                    vm.orderPayments[index].spendingAccountDetails = sa;
+                })
+                .catch(function(ex){
+                    toastr.error(ex, 'Error');
                 })
         }
-    };
-
-    vm.checkPaymentType();
+    });
 
     vm.submitOrder = function() {
         OrderCloud.Orders.Submit(vm.currentOrder.ID)
-            .then(function() {
-                CurrentOrder.Remove()
-                    .then(function(){
-                        toastr.success('Your order has been submitted', 'Success');
-                        $rootScope.$broadcast('OC:RemoveOrder');
-                        $state.go('orderReview', {orderid: vm.currentOrder.ID})
+                    .then(function(order){
+                        CurrentOrder.Remove()
+                            .then(function(){
+                                $state.go('orderReview', {orderid: order.ID});
+                                toastr.success('Your order has been submitted', 'Success');
+                                $rootScope.$broadcast('OC:RemoveOrder');
+                            })
                     })
-            })
             .catch(function(ex) {
                 toastr.error("Your order did not submit successfully.", 'Error');
                 //$exceptionHandler(ex);
@@ -253,6 +256,34 @@ function OrderReviewController(SubmittedOrder, isMultipleAddressShipping, OrderC
 	var vm = this;
     vm.submittedOrder = SubmittedOrder;
     vm.isMultipleAddressShipping = isMultipleAddressShipping;
+
+    OrderCloud.Payments.List(vm.submittedOrder.ID)
+        .then(function(data){
+            vm.orderPayments = data.Items;
+        })
+        .then(function(){
+            angular.forEach(vm.orderPayments, function(payment, index){
+                if(payment.Type === 'CreditCard' && payment.CreditCardID) {
+                    OrderCloud.CreditCards.Get(payment.CreditCardID)
+                        .then(function(cc){
+                            vm.orderPayments[index].creditCardDetails = cc;
+                        })
+                        .catch(function(ex){
+                            toastr.error(ex, 'Error');
+                        })
+                }
+                if(payment.Type === 'SpendingAccount' && payment.SpendingAccountID) {
+                    OrderCloud.SpendingAccounts.Get(payment.SpendingAccountID)
+                        .then(function(sa){
+                            vm.orderPayments[index].spendingAccountDetails = sa;
+                        })
+                        .catch(function(ex){
+                            toastr.error(ex, 'Error');
+                        })
+                }
+            });
+        });
+
 
     var dfd = $q.defer();
     var queue = [];

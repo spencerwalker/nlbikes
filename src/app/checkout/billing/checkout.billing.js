@@ -54,7 +54,7 @@ function CheckoutBillingController($state, $exceptionHandler, OrderCloud, Billin
                                     IsShipping: false
                                 })
                                 .then(function() {
-                                    OrderCloud.Orders.SetBillingAddress(order.ID, vm.address)
+                                    OrderCloud.Orders.Patch(order.ID, {BillingAddressID: vm.address.ID})
                                         .then(function() {
                                             $state.reload();
                                         })
@@ -75,7 +75,7 @@ function CheckoutBillingController($state, $exceptionHandler, OrderCloud, Billin
                 });
         }
         else {
-            OrderCloud.Orders.SetBillingAddress(order.ID, vm.address)
+            OrderCloud.Orders.Patch(order.ID, {BillingAddressID: vm.address})
                 .then(function() {
                     $state.reload();
                 })

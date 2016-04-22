@@ -117,6 +117,17 @@ function MiniCartController($q, $state, $rootScope, OrderCloud, LineItemHelpers,
         return expressCheckout;
     };
 
+    vm.checkForCheckout = function() {
+        var checkout = false;
+        angular.forEach($state.get(), function(state) {
+            if (state.url && state.url == '/checkout') {
+                checkout = true;
+                return checkout;
+            }
+        });
+        return checkout;
+    };
+
     vm.goToCart = function() {
         $state.go('cart', {}, {reload: true});
     };

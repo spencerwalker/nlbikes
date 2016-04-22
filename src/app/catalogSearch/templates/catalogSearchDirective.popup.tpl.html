@@ -2,15 +2,7 @@
      ng-show="isOpen() && !moveInProgress"
      aria-hidden="{{!isOpen()}}">
     <p class="popup-headers text-primary" ng-if="$parent.catalogSearch.productData.length">Products</p>
-    <ul class="uib-dropdown-menu">
-        <div ng-repeat="match in matches track by $index" ng-class="{active: isActive($index) }" ng-mouseenter="selectActive($index)" ng-click="selectMatch($index)" role="option" id="{{::match.id}}">
-            <div uib-typeahead-match index="$index" match="match" query="query" template-url="'./catalogSearch/templates/catalogSearchDirective.popup-products.tpl.html'"></div>
-        </div>
-    </ul>
+    <div class="products-popup-results" ng-include="'./catalogSearch/templates/catalogSearchDirective.popup-products.tpl.html'"></div>
     <p class="popup-headers text-primary" ng-if="$parent.catalogSearch.categoryData.length">Categories</p>
-    <ul class="uib-dropdown-menu" role="listbox">
-        <div ng-repeat="match in matches track by $index" ng-class="{active: isActive($index) }" ng-mouseenter="selectActive($index)" ng-click="selectMatch($index)" role="option" id="{{::match.id}}">
-            <div uib-typeahead-match index="$index" match="match" query="query" template-url="'./catalogSearch/templates/catalogSearchDirective.popup-categories.tpl.html'"></div>
-        </div>
-    </ul>
+    <div class="categories-popup-results" ng-include="'./catalogSearch/templates/catalogSearchDirective.popup-categories.tpl.html'"></div>
 </div>

@@ -4,7 +4,7 @@
         <div ng-if="!checkoutShipping.customShipping" class="form-group">
             <div ng-if="checkout.shippingAddresses.length">
                 <label for="shipping_address">Shipping Address</label>
-                <select id="shipping_address" name="ShippingAddress" ng-change="checkoutShipping.SaveShippingAddress(checkout.currentOrder);" ng-model="checkout.currentOrder.ShippingAddressID" class="form-control" ng-options="address.ID as (address.AddressName || address.Street1 + ' ' + address.Street2) for address in checkout.shippingAddresses"></select>
+                <select id="shipping_address" name="ShippingAddress" ng-change="checkoutShipping.SaveShippingAddress(checkout.currentOrder);" ng-model="checkout.currentOrder.ShippingAddressID" class="form-control" ng-options="address.ID as (address.AddressName || address.Street1) for address in checkout.shippingAddresses"></select>
             </div>
             <p id="address_paragraph" ng-if="checkout.currentOrder.ShippingAddressID">{{checkout.currentOrder.ShippingAddress | address: 'full'}}</p>
         </div>
