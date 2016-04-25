@@ -140,6 +140,13 @@
 }
 
 //Theme
+.navbar-flex {
+  #BaseTop {
+    background-color: @white;
+    .drop-shadow;
+  }
+}
+
 .logo {
   max-width: 225px;
   padding: 5px 0;
@@ -152,6 +159,14 @@
     > li {
       > a {
         color: @white;
+        -webkit-transition: background-color 0.15s ease-in-out;
+        -moz-transition: background-color 0.15s ease-in-out;
+        transition: background-color 0.15s ease-in-out;
+
+        &:hover,
+        &:focus {
+          color: @white;
+        }
       }
     }
   }
@@ -160,7 +175,7 @@
     margin-left: -@padding-base-horizontal;
     margin-right: -@padding-base-horizontal;
     padding: @padding-base-horizontal (@padding-base-horizontal*2) 0;
-    color: lighten(@brand-primary, 35);
+    color: @brand-secondary;
     border-top: 1px solid darken(@brand-primary, 5);
 
     #gradient > .vertical(@start-color: lighten(@dashboard-leftnav-bg, 5); @end-color: @dashboard-leftnav-bg; @start-percent: 0%; @end-percent: 100%)

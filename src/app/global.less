@@ -100,18 +100,109 @@ colgroup {
 //Theme
 @import (less) url(https://fonts.googleapis.com/css?family=Roboto:400,500,700,900,300,100);
 
-img {
-  width: 100%;
-  max-width: 100%;
+body {
+  background-color: @navbar-default-bg;
 }
 
-.nav {
-  > li {
-    > a {
-      &:hover,
-      &:focus {
-        color: @white;
+.btn {
+  -webkit-transition: background-color 0.15s ease-in-out;
+  -moz-transition: background-color 0.15s ease-in-out;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.page-header {
+  border-bottom: 1px solid @gray;
+}
+
+.text-muted {
+  color: @gray;
+}
+
+//Category List
+.category-list-item {
+  .thumbnail {
+    padding: 0;
+    border: none;
+    background-color: @brand-secondary;
+    overflow: hidden;
+    -webkit-transition: background-color 0.15s ease-in-out;
+    -moz-transition: background-color 0.15s ease-in-out;
+    transition: background-color 0.15s ease-in-out;
+    .drop-shadow;
+
+    img {
+      width: 100%;
+      opacity: 0.9;
+      -webkit-transition: opacity 0.15s ease-in-out;
+      -moz-transition: opacity 0.15s ease-in-out;
+      transition: opacity 0.15s ease-in-out;
+    }
+
+    .caption {
+      color: @white;
+    }
+
+    &:hover {
+      background-color: lighten(@brand-secondary, 5);
+
+      img {
+        opacity: 1;
       }
     }
   }
+}
+
+//Product List
+.product-list {
+  > div {
+    padding-bottom: 20px !important;
+
+    .product-item {
+      padding: 0 20px 20px !important;
+    }
+  }
+}
+
+.product-item {
+  padding: 20px;
+  background: #FFFFFF;
+  border-radius: @border-radius-base;
+  .drop-shadow;
+
+  ~ ordercloud-quick-view {
+    .btn {
+      opacity: 0;
+      color: @white;
+      background-color: @brand-secondary;
+      border-color: darken(@brand-secondary, 10);
+      .drop-shadow;
+      -webkit-transition: all 0.15s ease-in-out;
+      -moz-transition: all 0.15s ease-in-out;
+      transition: all 0.15s ease-in-out;
+    }
+  }
+
+  &:hover {
+    ~ ordercloud-quick-view {
+      .btn {
+        opacity: 1;
+      }
+    }
+  }
+
+  ~ ordercloud-quick-view {
+    &:hover {
+      .btn {
+        background-color: lighten(@brand-secondary, 5);
+        opacity: 1;
+      }
+    }
+  }
+}
+
+ordercloud-quick-view .btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
 }

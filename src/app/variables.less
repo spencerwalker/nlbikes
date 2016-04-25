@@ -17,10 +17,19 @@
 @infinite-scroll-size: 600px;
 
 //Theme
+.drop-shadow {
+  -webkit-box-shadow: 0px 2px 3px 0px rgba(0,0,0,0.15);
+  -moz-box-shadow: 0px 2px 3px 0px rgba(0,0,0,0.15);
+  box-shadow: 0px 1px 3px 0px rgba(0,0,0,0.07);
+}
+
 @brand-primary: #382948;
-@brand-secondary: #8a3b68;
+@brand-secondary: #00a093;
 @gray-base: #424243;
+@gray-light: lighten(@gray-base, 68.5%);
 @white: @gray-lighter;
+
+@navbar-default-bg: @gray-light;
 
 @font-family-sans-serif: 'Roboto', sans-serif;
 @text-color: @gray-base;
