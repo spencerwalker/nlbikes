@@ -16,6 +16,7 @@ function HomeConfig( $stateProvider ) {
 		})
 }
 
-function HomeController( ) {
+function HomeController(CurrentUser ) {
 	var vm = this;
+	vm.currentUser = CurrentUser.FirstName;
 }

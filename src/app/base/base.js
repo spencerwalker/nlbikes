@@ -72,7 +72,7 @@ function BaseConfig( $stateProvider ) {
                     });
                     deferred.resolve(components);
                     return deferred.promise;
-                }
+                },
             }
         });
 }
@@ -99,6 +99,18 @@ function BaseLeftController(ComponentList) {
     vm.organizationItems = ComponentList.buyerSpecific;
 }
 
-function BaseTopController() {
+function BaseTopController( OrderCloud) {
     var vm = this;
+    vm.user=getUser();
+
+    function getUser() {
+        var user = JSON.parse(atob(OrderCloud.Auth.ReadToken().split('.')[1])).usr;
+        return user;
+    };
+
+    if(vm.user == "estevan@holsom.com" || vm.user == "kmcgillicutty@hhbw.com" || vm.user == "rad@sdbiking.com" ){
+        vm.hasIcon=true;
+    } else{
+        vm.hasIcon=false;
+    }
 }
